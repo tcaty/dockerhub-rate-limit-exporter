@@ -36,14 +36,23 @@ func (dh *DockerHub) FetchHeaders() (http.Header, error) {
 		return nil, err
 	}
 
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("could fetch dockerhub api, received status code: %d", res.StatusCode)
+	}
+
 	return res.Header, err
 }
 
 func (dh *DockerHub) fetchToken() (string, error) {
 	url := fmt.Sprintf("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dh.repository)
 	res, err := http.Get(url)
+
 	if err != nil {
 		return "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("could fetch dockerhub token, received status code: %d", res.StatusCode)
 	}
 
 	defer res.Body.Close()

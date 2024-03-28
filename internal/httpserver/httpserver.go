@@ -1,25 +1,32 @@
 package httpserver
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HttpServer struct {
-	port        int
+	url         string
 	metricsPath string
 }
 
-func New(port int, metricsPath string) *HttpServer {
+func New(url string, metricsPath string) *HttpServer {
 	return &HttpServer{
-		port:        port,
+		url:         url,
 		metricsPath: metricsPath,
 	}
 }
 
-func (s *HttpServer) Run() {
-	http.Handle(s.metricsPath, promhttp.Handler())
-	http.ListenAndServe(fmt.Sprintf(":%d", s.port), nil)
+func (hs *HttpServer) Run() error {
+	http.Handle(hs.metricsPath, promhttp.Handler())
+
+	slog.Info(
+		"Starting http server",
+		"url", hs.url,
+		"path", hs.metricsPath,
+	)
+
+	return http.ListenAndServe(hs.url, nil)
 }

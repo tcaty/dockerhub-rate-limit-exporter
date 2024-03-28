@@ -30,13 +30,11 @@ func New(dockerhub DockerHub, rateLimit RateLimit) *Exporter {
 func (e *Exporter) Run(scrapeInterval time.Duration) error {
 	headers, err := e.DockerHub.FetchHeaders()
 	if err != nil {
-		// TODO: write to chanel
-		fmt.Println(err)
+		return fmt.Errorf("could not login to dockerhub: %v", err)
 	}
 
 	if err := e.RateLimit.Init(headers); err != nil {
-		// TODO: write to chanel
-		fmt.Println(err)
+		return fmt.Errorf("could not initialize metrics labels: %v", err)
 	}
 
 	go (func() {
