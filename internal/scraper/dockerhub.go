@@ -12,6 +12,8 @@ import (
 	"github.com/tcaty/dockerhub-rate-limit-exporter/pkg/utils"
 )
 
+// TODO: add docs as comments
+
 type DockerHub struct {
 	repository string
 	username   string
