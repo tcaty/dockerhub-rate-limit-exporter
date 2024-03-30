@@ -15,7 +15,7 @@ func main() {
 		utils.HandleFatal(err, "error occured during command line flags initialization")
 	}
 
-	dockerhub := dockerhub.New(flags.Repository)
+	dockerhub := dockerhub.New(flags.Repository, flags.DockerHubUsername, flags.DockerHubPassword)
 	ratelimit := ratelimit.New()
 	exporter := exporter.New(dockerhub, ratelimit)
 

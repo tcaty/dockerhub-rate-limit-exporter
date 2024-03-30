@@ -2,17 +2,27 @@ package exporter
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 )
 
+type MetaData struct {
+	Host     string
+	Username string
+}
+
+type RateLimitData struct {
+	Total     float64
+	Remaining float64
+}
+
 type DockerHub interface {
-	FetchHeaders() (http.Header, error)
+	FetchMetaData() (*MetaData, error)
+	FetchRateLimitData() (*RateLimitData, error)
 }
 
 type RateLimit interface {
-	Init(http.Header) error
-	Update(http.Header) error
+	Init(*MetaData)
+	Update(*RateLimitData)
 }
 
 type Exporter struct {
@@ -28,26 +38,21 @@ func New(dockerhub DockerHub, rateLimit RateLimit) *Exporter {
 }
 
 func (e *Exporter) Run(scrapeInterval time.Duration) error {
-	headers, err := e.DockerHub.FetchHeaders()
+	metaData, err := e.DockerHub.FetchMetaData()
 	if err != nil {
 		return fmt.Errorf("could not login to dockerhub: %v", err)
 	}
 
-	if err := e.RateLimit.Init(headers); err != nil {
-		return fmt.Errorf("could not initialize metrics labels: %v", err)
-	}
+	e.RateLimit.Init(metaData)
 
 	go (func() {
-		headers, err := e.DockerHub.FetchHeaders()
+		rateLimitData, err := e.DockerHub.FetchRateLimitData()
 		if err != nil {
 			// TODO: write to chanel
 			fmt.Println(err)
 		}
 
-		if err := e.RateLimit.Update(headers); err != nil {
-			// TODO: write to chanel
-			fmt.Println(err)
-		}
+		e.RateLimit.Update(rateLimitData)
 
 		time.Sleep(scrapeInterval)
 	})()
