@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/tcaty/dockerhub-rate-limit-exporter/cmd"
 )
 
 type HttpServer struct {
@@ -12,10 +13,10 @@ type HttpServer struct {
 	metricsPath string
 }
 
-func New(url string, metricsPath string) *HttpServer {
+func New(flags cmd.Flags) *HttpServer {
 	return &HttpServer{
-		url:         url,
-		metricsPath: metricsPath,
+		url:         flags.HttpServerUrl,
+		metricsPath: flags.MetricsPath,
 	}
 }
 

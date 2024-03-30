@@ -3,59 +3,43 @@ package exporter
 import (
 	"fmt"
 	"time"
+
+	"github.com/tcaty/dockerhub-rate-limit-exporter/internal/httpserver"
+	"github.com/tcaty/dockerhub-rate-limit-exporter/internal/scraper"
 )
 
-type MetaData struct {
-	Host     string
-	Username string
-}
-
-type RateLimitData struct {
-	Total     float64
-	Remaining float64
-}
-
-type DockerHub interface {
-	FetchMetaData() (*MetaData, error)
-	FetchRateLimitData() (*RateLimitData, error)
-}
-
-type RateLimit interface {
-	Init(*MetaData)
-	Update(*RateLimitData)
-}
-
 type Exporter struct {
-	DockerHub DockerHub
-	RateLimit RateLimit
+	scraper    *scraper.Scraper
+	httpServer *httpserver.HttpServer
 }
 
-func New(dockerhub DockerHub, rateLimit RateLimit) *Exporter {
+func New(scraper *scraper.Scraper, httpServer *httpserver.HttpServer) *Exporter {
 	return &Exporter{
-		DockerHub: dockerhub,
-		RateLimit: rateLimit,
+		scraper:    scraper,
+		httpServer: httpServer,
 	}
 }
 
 func (e *Exporter) Run(scrapeInterval time.Duration) error {
-	metaData, err := e.DockerHub.FetchMetaData()
-	if err != nil {
-		return fmt.Errorf("could not login to dockerhub: %v", err)
-	}
+	httpServerErrCh := make(chan error)
+	scraperErrCh := make(chan error)
 
-	e.RateLimit.Init(metaData)
-
-	go (func() {
-		rateLimitData, err := e.DockerHub.FetchRateLimitData()
-		if err != nil {
-			// TODO: write to chanel
-			fmt.Println(err)
+	go func() {
+		if err := e.httpServer.Run(); err != nil {
+			httpServerErrCh <- err
 		}
+	}()
 
-		e.RateLimit.Update(rateLimitData)
+	go func() {
+		if err := e.scraper.Scrape(scrapeInterval); err != nil {
+			scraperErrCh <- err
+		}
+	}()
 
-		time.Sleep(scrapeInterval)
-	})()
-
-	return nil
+	select {
+	case err := <-httpServerErrCh:
+		return fmt.Errorf("error occured while running httpServer: %v", err)
+	case err := <-scraperErrCh:
+		return fmt.Errorf("error occured while running scraper: %v", err)
+	}
 }

@@ -1,7 +1,7 @@
-package ratelimit
+package scraper
 
 import (
-	"github.com/tcaty/dockerhub-rate-limit-exporter/internal/exporter"
+	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -12,29 +12,32 @@ type RateLimit struct {
 	Remaining prometheus.Gauge
 }
 
-func New() *RateLimit {
-	return &RateLimit{}
-}
-
-func (rl *RateLimit) Init(metaData *exporter.MetaData) {
+func NewRateLimit(metaData *MetaData) *RateLimit {
 	labels := map[string]string{
 		"host":     metaData.Host,
-		"username": "anonymus",
+		"username": metaData.Username,
 	}
 
-	rl.Total = promauto.NewGauge(prometheus.GaugeOpts{
+	total := promauto.NewGauge(prometheus.GaugeOpts{
 		Name:        "dockerhub_rate_limit_total",
 		Help:        "RateLimit-Limit",
 		ConstLabels: labels,
 	})
-	rl.Remaining = promauto.NewGauge(prometheus.GaugeOpts{
+
+	remaining := promauto.NewGauge(prometheus.GaugeOpts{
 		Name:        "dockerhub_rate_limit_remaining",
 		Help:        "RateLimit-Remaining",
 		ConstLabels: labels,
 	})
+
+	return &RateLimit{
+		Total:     total,
+		Remaining: remaining,
+	}
 }
 
-func (rl *RateLimit) Update(rateLimitData *exporter.RateLimitData) {
+func (rl *RateLimit) Update(rateLimitData *RateLimitData) {
 	rl.Total.Set(rateLimitData.Total)
 	rl.Remaining.Set(rateLimitData.Remaining)
+	fmt.Println("updated")
 }

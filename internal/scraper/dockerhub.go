@@ -1,11 +1,14 @@
-package dockerhub
+package scraper
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
-	"github.com/tcaty/dockerhub-rate-limit-exporter/internal/exporter"
+	"github.com/tcaty/dockerhub-rate-limit-exporter/cmd"
 	"github.com/tcaty/dockerhub-rate-limit-exporter/pkg/utils"
 )
 
@@ -15,17 +18,16 @@ type DockerHub struct {
 	password   string
 }
 
-func New(repository string, username string, password string) *DockerHub {
+func NewDockerHub(flags cmd.Flags) *DockerHub {
 	return &DockerHub{
-		repository: repository,
-		username:   username,
-		password:   password,
+		repository: flags.Repository,
+		username:   flags.DockerHubUsername,
+		password:   flags.DockerHubPassword,
 	}
 }
 
-func (dh *DockerHub) FetchMetaData() (*exporter.MetaData, error) {
-	authenticatedMode := false
-	headers, err := dh.fetchHeaders(authenticatedMode)
+func (dh *DockerHub) FetchMetaData() (*MetaData, error) {
+	headers, err := dh.fetchHeaders(false)
 
 	if err != nil {
 		return nil, err
@@ -37,17 +39,24 @@ func (dh *DockerHub) FetchMetaData() (*exporter.MetaData, error) {
 		return nil, err
 	}
 
-	metaData := &exporter.MetaData{
+	var username string
+
+	if dh.IsAuthenticatedMode() {
+		username = dh.username
+	} else {
+		username = ""
+	}
+
+	metaData := &MetaData{
 		Host:     host,
-		Username: dh.username,
+		Username: username,
 	}
 
 	return metaData, nil
 }
 
-func (dh *DockerHub) FetchRateLimitData() (*exporter.RateLimitData, error) {
-	authenticatedMode := !(dh.username == AnonymousUsername && dh.password == AnonymousPassword)
-	headers, err := dh.fetchHeaders(authenticatedMode)
+func (dh *DockerHub) FetchRateLimitData() (*RateLimitData, error) {
+	headers, err := dh.fetchHeaders(dh.IsAuthenticatedMode())
 
 	if err != nil {
 		return nil, err
@@ -65,7 +74,7 @@ func (dh *DockerHub) FetchRateLimitData() (*exporter.RateLimitData, error) {
 		return nil, err
 	}
 
-	rateLimitData := &exporter.RateLimitData{
+	rateLimitData := &RateLimitData{
 		Total:     limit,
 		Remaining: remaining,
 	}
@@ -73,8 +82,26 @@ func (dh *DockerHub) FetchRateLimitData() (*exporter.RateLimitData, error) {
 	return rateLimitData, nil
 }
 
-func (dh *DockerHub) fetchHeaders(authenticatedMode bool) (http.Header, error) {
-	token, err := dh.fetchToken(authenticatedMode)
+func parseRateLimitHeader(header http.Header, name string) (float64, error) {
+	h, err := utils.ParseHeader(header, fmt.Sprintf("Ratelimit-%s", name))
+	if err != nil {
+		return 0, err
+	}
+
+	v, err := strconv.ParseFloat(strings.Split(h, ";")[0], 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return v, nil
+}
+
+func (dh *DockerHub) IsAuthenticatedMode() bool {
+	return !(dh.username == "" && dh.password == "")
+}
+
+func (dh *DockerHub) fetchHeaders(IsAuthenticatedMode bool) (http.Header, error) {
+	token, err := dh.fetchToken(IsAuthenticatedMode)
 
 	if err != nil {
 		return nil, err
@@ -102,7 +129,7 @@ func (dh *DockerHub) fetchHeaders(authenticatedMode bool) (http.Header, error) {
 	return res.Header, err
 }
 
-func (dh *DockerHub) fetchToken(authenticatedMode bool) (string, error) {
+func (dh *DockerHub) fetchToken(IsAuthenticatedMode bool) (string, error) {
 	url := fmt.Sprintf("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dh.repository)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
@@ -110,9 +137,10 @@ func (dh *DockerHub) fetchToken(authenticatedMode bool) (string, error) {
 		return "", err
 	}
 
-	if authenticatedMode {
+	if IsAuthenticatedMode {
 		req.SetBasicAuth(dh.username, dh.password)
 	}
+
 	client := http.Client{}
 	res, err := client.Do(req)
 
@@ -133,4 +161,11 @@ func (dh *DockerHub) fetchToken(authenticatedMode bool) (string, error) {
 	}
 
 	return tokenResponseBody.Token, nil
+}
+
+type TokenResponseBody struct {
+	Token       string    `json:"token"`
+	AccessToken string    `json:"access_token"`
+	ExpiresIn   int       `json:"expires_in"`
+	IssuedAt    time.Time `json:"issued_at"`
 }
