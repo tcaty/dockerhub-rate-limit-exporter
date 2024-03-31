@@ -8,27 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tcaty/dockerhub-rate-limit-exporter/cmd"
 	"github.com/tcaty/dockerhub-rate-limit-exporter/pkg/utils"
 )
 
-// TODO: add docs as comments
-
-type DockerHub struct {
+type dockerHub struct {
 	repository string
 	username   string
 	password   string
 }
 
-func NewDockerHub(flags cmd.Flags) *DockerHub {
-	return &DockerHub{
-		repository: flags.Repository,
-		username:   flags.DockerHubUsername,
-		password:   flags.DockerHubPassword,
-	}
-}
-
-func (dh *DockerHub) FetchMetaData() (*MetaData, error) {
+func (dh *dockerHub) fetchMetaData() (*metaData, error) {
 	headers, err := dh.fetchHeaders(false)
 
 	if err != nil {
@@ -41,24 +30,16 @@ func (dh *DockerHub) FetchMetaData() (*MetaData, error) {
 		return nil, err
 	}
 
-	var username string
-
-	if dh.IsAuthenticatedMode() {
-		username = dh.username
-	} else {
-		username = ""
-	}
-
-	metaData := &MetaData{
-		Host:     host,
-		Username: username,
+	metaData := &metaData{
+		host:     host,
+		username: dh.username,
 	}
 
 	return metaData, nil
 }
 
-func (dh *DockerHub) FetchRateLimitData() (*RateLimitData, error) {
-	headers, err := dh.fetchHeaders(dh.IsAuthenticatedMode())
+func (dh *dockerHub) fetchRateLimitData() (*rateLimitData, error) {
+	headers, err := dh.fetchHeaders(dh.isAuthenticatedMode())
 
 	if err != nil {
 		return nil, err
@@ -76,9 +57,9 @@ func (dh *DockerHub) FetchRateLimitData() (*RateLimitData, error) {
 		return nil, err
 	}
 
-	rateLimitData := &RateLimitData{
-		Total:     limit,
-		Remaining: remaining,
+	rateLimitData := &rateLimitData{
+		total:     limit,
+		remaining: remaining,
 	}
 
 	return rateLimitData, nil
@@ -98,11 +79,11 @@ func parseRateLimitHeader(header http.Header, name string) (float64, error) {
 	return v, nil
 }
 
-func (dh *DockerHub) IsAuthenticatedMode() bool {
+func (dh *dockerHub) isAuthenticatedMode() bool {
 	return !(dh.username == "" && dh.password == "")
 }
 
-func (dh *DockerHub) fetchHeaders(IsAuthenticatedMode bool) (http.Header, error) {
+func (dh *dockerHub) fetchHeaders(IsAuthenticatedMode bool) (http.Header, error) {
 	token, err := dh.fetchToken(IsAuthenticatedMode)
 
 	if err != nil {
@@ -131,7 +112,7 @@ func (dh *DockerHub) fetchHeaders(IsAuthenticatedMode bool) (http.Header, error)
 	return res.Header, err
 }
 
-func (dh *DockerHub) fetchToken(IsAuthenticatedMode bool) (string, error) {
+func (dh *dockerHub) fetchToken(IsAuthenticatedMode bool) (string, error) {
 	url := fmt.Sprintf("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dh.repository)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
@@ -156,7 +137,7 @@ func (dh *DockerHub) fetchToken(IsAuthenticatedMode bool) (string, error) {
 
 	defer res.Body.Close()
 
-	var tokenResponseBody TokenResponseBody
+	var tokenResponseBody tokenResponseBody
 	d := json.NewDecoder(res.Body)
 	if err := d.Decode(&tokenResponseBody); err != nil {
 		return "", err
@@ -165,7 +146,7 @@ func (dh *DockerHub) fetchToken(IsAuthenticatedMode bool) (string, error) {
 	return tokenResponseBody.Token, nil
 }
 
-type TokenResponseBody struct {
+type tokenResponseBody struct {
 	Token       string    `json:"token"`
 	AccessToken string    `json:"access_token"`
 	ExpiresIn   int       `json:"expires_in"`

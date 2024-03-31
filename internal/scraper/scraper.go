@@ -2,37 +2,36 @@ package scraper
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
-
-	"github.com/tcaty/dockerhub-rate-limit-exporter/cmd"
 )
 
-// TODO: make private almost all
-
-type MetaData struct {
-	Host     string
-	Username string
+type metaData struct {
+	host     string
+	username string
 }
 
-type RateLimitData struct {
-	Total     float64
-	Remaining float64
+type rateLimitData struct {
+	total     float64
+	remaining float64
 }
 
 type Scraper struct {
-	DockerHub *DockerHub
+	dockerHub *dockerHub
 }
 
-func New(flags cmd.Flags) *Scraper {
-	dockerhub := NewDockerHub(flags)
-
+func New(repository string, username string, password string) *Scraper {
 	return &Scraper{
-		DockerHub: dockerhub,
+		dockerHub: &dockerHub{
+			repository: repository,
+			username:   username,
+			password:   password,
+		},
 	}
 }
 
 func (s *Scraper) Scrape(interval time.Duration) error {
-	metaData, err := s.DockerHub.FetchMetaData()
+	metaData, err := s.dockerHub.fetchMetaData()
 
 	if err != nil {
 		return fmt.Errorf("could not login to dockerhub: %v", err)
@@ -41,40 +40,46 @@ func (s *Scraper) Scrape(interval time.Duration) error {
 	rateLimit := NewRateLimit(metaData)
 
 	for {
-		rateLimitData, err := s.DockerHub.FetchRateLimitData()
+		rateLimitData, err := s.dockerHub.fetchRateLimitData()
 
 		if err != nil {
 			return err
 		}
 
-		rateLimit.Update(rateLimitData)
+		rateLimit.update(rateLimitData)
+
+		slog.Info(
+			"rate limit scrape succeeded",
+			"host", metaData.host,
+			"username", metaData.username,
+		)
 
 		time.Sleep(interval)
 	}
 }
 
 func (s *Scraper) Fetch() error {
-	metaData, err := s.DockerHub.FetchMetaData()
+	metaData, err := s.dockerHub.fetchMetaData()
 
 	if err != nil {
 		return fmt.Errorf("could not login to dockerhub: %v", err)
 	}
 
-	rateLimitData, err := s.DockerHub.FetchRateLimitData()
+	rateLimitData, err := s.dockerHub.fetchRateLimitData()
 
 	if err != nil {
 		return err
 	}
 
-	if s.DockerHub.IsAuthenticatedMode() {
+	if s.dockerHub.isAuthenticatedMode() {
 		fmt.Println("Mode:", "Authenticated")
-		fmt.Println("Username:", metaData.Username)
+		fmt.Println("Username:", metaData.username)
 	} else {
 		fmt.Println("Mode:", "Anonymous")
 	}
-	fmt.Println("Host:", metaData.Host)
-	fmt.Println("RateLimit [Total]:", rateLimitData.Total)
-	fmt.Println("RateLimit [Remaining]:", rateLimitData.Remaining)
+	fmt.Println("Host:", metaData.host)
+	fmt.Println("RateLimit [Total]:", rateLimitData.total)
+	fmt.Println("RateLimit [Remaining]:", rateLimitData.remaining)
 
 	return nil
 }

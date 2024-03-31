@@ -1,21 +1,19 @@
 package scraper
 
 import (
-	"fmt"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type RateLimit struct {
-	Total     prometheus.Gauge
-	Remaining prometheus.Gauge
+type rateLimit struct {
+	total     prometheus.Gauge
+	remaining prometheus.Gauge
 }
 
-func NewRateLimit(metaData *MetaData) *RateLimit {
+func NewRateLimit(metaData *metaData) *rateLimit {
 	labels := map[string]string{
-		"host":     metaData.Host,
-		"username": metaData.Username,
+		"host":     metaData.host,
+		"username": metaData.username,
 	}
 
 	total := promauto.NewGauge(prometheus.GaugeOpts{
@@ -30,14 +28,13 @@ func NewRateLimit(metaData *MetaData) *RateLimit {
 		ConstLabels: labels,
 	})
 
-	return &RateLimit{
-		Total:     total,
-		Remaining: remaining,
+	return &rateLimit{
+		total:     total,
+		remaining: remaining,
 	}
 }
 
-func (rl *RateLimit) Update(rateLimitData *RateLimitData) {
-	rl.Total.Set(rateLimitData.Total)
-	rl.Remaining.Set(rateLimitData.Remaining)
-	fmt.Println("updated")
+func (rl *rateLimit) update(rateLimitData *rateLimitData) {
+	rl.total.Set(rateLimitData.total)
+	rl.remaining.Set(rateLimitData.remaining)
 }
