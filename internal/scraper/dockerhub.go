@@ -132,7 +132,7 @@ func (dh *dockerHub) fetchToken(IsAuthenticatedMode bool) (string, error) {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("could fetch dockerhub token, received status code: %d", res.StatusCode)
+		return "", fmt.Errorf("could not fetch dockerhub token, received status code: %d", res.StatusCode)
 	}
 
 	defer res.Body.Close()
