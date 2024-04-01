@@ -33,6 +33,7 @@ func (dh *dockerHub) fetchMetaData() (*metaData, error) {
 	metaData := &metaData{
 		host:     host,
 		username: dh.username,
+		mode:     dh.mode(),
 	}
 
 	return metaData, nil
@@ -81,6 +82,13 @@ func parseRateLimitHeader(header http.Header, name string) (float64, error) {
 
 func (dh *dockerHub) isAuthenticatedMode() bool {
 	return !(dh.username == "" && dh.password == "")
+}
+
+func (dh *dockerHub) mode() string {
+	if dh.isAuthenticatedMode() {
+		return "authenticated"
+	}
+	return "anonymous"
 }
 
 func (dh *dockerHub) fetchHeaders(IsAuthenticatedMode bool) (http.Header, error) {

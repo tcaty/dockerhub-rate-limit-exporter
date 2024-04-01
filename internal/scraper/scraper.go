@@ -9,6 +9,7 @@ import (
 type metaData struct {
 	host     string
 	username string
+	mode     string
 }
 
 type rateLimitData struct {
@@ -71,12 +72,11 @@ func (s *Scraper) Fetch() error {
 		return err
 	}
 
+	fmt.Println("Mode:", s.dockerHub.mode())
 	if s.dockerHub.isAuthenticatedMode() {
-		fmt.Println("Mode:", "Authenticated")
 		fmt.Println("Username:", metaData.username)
-	} else {
-		fmt.Println("Mode:", "Anonymous")
 	}
+	fmt.Println("Repository:", s.dockerHub.repository)
 	fmt.Println("Host:", metaData.host)
 	fmt.Println("RateLimit [Total]:", rateLimitData.total)
 	fmt.Println("RateLimit [Remaining]:", rateLimitData.remaining)

@@ -5,9 +5,15 @@
 # Exclude locally vendored dependencies.
 vendor/
 
+# Exclude folder with examples.
+examples/
+
 # Exclude "build-time" ignore files.
 .dockerignore
 .gcloudignore
 
 # Exclude git history and configuration.
 .gitignore
+
+# Exclude github workflows
+.github/

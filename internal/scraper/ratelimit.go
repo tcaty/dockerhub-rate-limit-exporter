@@ -14,6 +14,7 @@ func NewRateLimit(metaData *metaData) *rateLimit {
 	labels := map[string]string{
 		"host":     metaData.host,
 		"username": metaData.username,
+		"mode":     metaData.mode,
 	}
 
 	total := promauto.NewGauge(prometheus.GaugeOpts{
