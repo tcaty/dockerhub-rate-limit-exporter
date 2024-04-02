@@ -49,10 +49,12 @@ func (s *Scraper) Scrape(interval time.Duration) error {
 
 		rateLimit.update(rateLimitData)
 
-		slog.Info(
+		slog.Debug(
 			"rate limit scrape succeeded",
 			"host", metaData.host,
 			"username", metaData.username,
+			"remaining", rateLimitData.remaining,
+			"total", rateLimitData.total,
 		)
 
 		time.Sleep(interval)

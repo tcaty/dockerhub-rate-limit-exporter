@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: dockerhub-rate-limit-exporter-authenticated
+    static_configs:
+      - targets:
+        - "dockerhub-rate-limit-exporter-authenticated:8080"
+  - job_name: dockerhub-rate-limit-exporter-anonymous
+    static_configs:
+      - targets:
+        - "dockerhub-rate-limit-exporter-anonymous:8080"

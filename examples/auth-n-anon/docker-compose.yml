@@ -1,15 +1,28 @@
 version: "3"
   
 services:
-  # exporter in anonymous mode has default rate limits
-  # according to dockerhub docs they equals to 100 pulls per 6 hours per IP address
-  dockerhub-rate-limit-exporter:
+  # authenticated instance will have increased rate limits
+  # according to dockerhub docs they are 200 pulls per 6 hour period
+  dockerhub-rate-limit-exporter-authenticated:
     build:
       context: ../../
       dockerfile: Dockerfile
-    command: scrape
+    command: scrape --log-level DEBUG
+    environment:
+      USERNAME: ${DOCKERHUB_USERNAME}
+      PASSWORD: ${DOCKERHUB_PASSWORD}
     ports:
       - "8080:8080"
+        
+  # exporter in anonymous mode has default rate limits
+  # according to dockerhub docs they equals to 100 pulls per 6 hours per IP address
+  dockerhub-rate-limit-exporter-anonymous:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    command: scrape --log-level DEBUG
+    ports:
+      - "8081:8080"
 
   prometheus:
     image: prom/prometheus:v2.51.1
@@ -18,7 +31,8 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - dockerhub-rate-limit-exporter
+      - dockerhub-rate-limit-exporter-authenticated
+      - dockerhub-rate-limit-exporter-anonymous
       
   grafana:
     image: grafana/grafana:10.4.1

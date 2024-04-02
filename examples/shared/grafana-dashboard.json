@@ -108,7 +108,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "dockerhub_rate_limit_total{mode=\"$mode\", host=\"$host\"}",
+          "expr": "dockerhub_rate_limit_total{mode=\"$mode\", username=\"$username\", host=\"$host\"}",
           "instant": false,
           "legendFormat": "Total",
           "range": true,
@@ -120,7 +120,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "dockerhub_rate_limit_remaining{mode=\"$mode\", host=\"$host\"}",
+          "expr": "dockerhub_rate_limit_remaining{mode=\"$mode\", username=\"$username\", host=\"$host\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "Remaining",
@@ -217,7 +217,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "dockerhub_rate_limit_total{mode=\"$mode\", host=\"$host\"} - dockerhub_rate_limit_remaining{mode=\"$mode\", host=\"$host\"}",
+          "expr": "dockerhub_rate_limit_total{mode=\"$mode\", username=\"$username\", host=\"$host\"} - dockerhub_rate_limit_remaining{mode=\"$mode\",  username=\"$username\", host=\"$host\"}",
           "instant": false,
           "legendFormat": "Used",
           "range": true,
@@ -235,7 +235,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "Prometheus",
           "value": "prometheus"
         },
@@ -254,9 +254,9 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "anonymous",
-          "value": "anonymous"
+          "selected": true,
+          "text": "authenticated",
+          "value": "authenticated"
         },
         "datasource": {
           "type": "prometheus",
@@ -283,6 +283,34 @@
       {
         "current": {
           "selected": true,
+          "text": "tcaty",
+          "value": "tcaty"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(dockerhub_rate_limit_total{mode=\"$mode\"},username)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Username",
+        "multi": false,
+        "name": "username",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(dockerhub_rate_limit_total{mode=\"$mode\"},username)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
           "text": "95.139.157.94",
           "value": "95.139.157.94"
         },
@@ -290,7 +318,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(dockerhub_rate_limit_total,host)",
+        "definition": "label_values(dockerhub_rate_limit_total{mode=\"$mode\", username=\"$username\"},host)",
         "hide": 0,
         "includeAll": false,
         "label": "Host",
@@ -299,7 +327,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(dockerhub_rate_limit_total,host)",
+          "query": "label_values(dockerhub_rate_limit_total{mode=\"$mode\", username=\"$username\"},host)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
