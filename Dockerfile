@@ -11,13 +11,13 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-RUN go build -v -o ./app ./
+RUN go build -v -o ./exporter ./
 
 
 # -- runtime stage --
 FROM scratch as runtime
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /usr/src/app /app
+COPY --from=build /usr/src/exporter /exporter
 
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["/exporter"]
