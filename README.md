@@ -54,5 +54,17 @@ Also you can set flag value by using environment variable. For example, flag `--
 ## Examples
 
 There are two examples in `examples/` folder:
-* `simple` - simple example with one exporter instance
-* `auth-n-anon` - example with several exporter instances
+* `simple` - simple example with one exporter instance in anonymous mode.
+* `auth-n-anon` - example with several exporter instances in anonymous and authenticated modes.
+
+Both of them provides provisioning grafana dashboard for rate limit metrics. It looks like this:
+
+![Без имени](https://github.com/tcaty/dockerhub-rate-limit-exporter/assets/79706809/ffbb3050-33ae-45a4-bceb-c3eba45c84c4)
+
+To run any of them move to their folder and run command:
+```
+docker-compose up -d
+```
+Then open in browser:
+* http://0.0.0.0:3000 - grafana
+* http://0.0.0.0:9090 - prometheus
