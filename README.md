@@ -27,7 +27,9 @@ RateLimit [Remaining]: 100
 
 If you want to have access to rate limits usage history, you should run scraper command:
 ```
-docker run --rm --publish "8080:8080" -it --entrypoint /exporter tcaty/dockerhub-rate-limit-exporter scraper
+docker run \
+  --rm --publish "8080:8080" \
+  -it --entrypoint /exporter tcaty/dockerhub-rate-limit-exporter scrape
 ```
 Check metrics with command:
 ```
