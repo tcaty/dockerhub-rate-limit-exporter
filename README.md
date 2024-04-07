@@ -49,7 +49,7 @@ dockerhub_rate_limit_total{host="xxx.xxx.xxx.xxx",mode="anonymous",username=""} 
 
 You can configure exporter via command line argmunets. Use command below to display available flags:
 ```
-docker run --rm -it --entrypoint /app dockerhub-rate-limit-exporter --help
+docker run --rm -it --entrypoint /exporter dockerhub-rate-limit-exporter --help
 ```
 Also you can set flag value by using environment variable. For example, flag `--username` corresponds to `$USERNAME` env variable.
 
