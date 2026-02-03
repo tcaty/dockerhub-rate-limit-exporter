@@ -1,6 +1,6 @@
 # Docker Hub rate limit exporter
 
-This tool created for monitoring Dokcer Hub rate limits according to [this](https://www.docker.com/blog/checking-your-current-docker-pull-rate-limits-and-status/) tutorial. 
+This tool created for monitoring Dokcer Hub rate limits according to [this](https://www.docker.com/blog/checking-your-current-docker-pull-rate-limits-and-status/) tutorial.
 
 ## Usage
 
@@ -12,7 +12,7 @@ There are two commands:
 
 If you want to understand your rate limits immediatly, you should use command below:
 ```
-docker run --rm -it --entrypoint /exporter tcaty/dockerhub-rate-limit-exporter fetch
+docker run --rm -it tcaty/dockerhub-rate-limit-exporter fetch
 ```
 Output:
 ```
@@ -29,7 +29,7 @@ If you want to have access to rate limits usage history, you should run scraper 
 ```
 docker run \
   --rm --publish "8080:8080" \
-  -it --entrypoint /exporter tcaty/dockerhub-rate-limit-exporter scrape
+  -it tcaty/dockerhub-rate-limit-exporter scrape
 ```
 Check metrics with command:
 ```
@@ -49,7 +49,7 @@ dockerhub_rate_limit_total{host="xxx.xxx.xxx.xxx",mode="anonymous",username=""} 
 
 You can configure exporter via command line argmunets. Use command below to display available flags:
 ```
-docker run --rm -it --entrypoint /exporter dockerhub-rate-limit-exporter --help
+docker run --rm -it dockerhub-rate-limit-exporter --help
 ```
 Also you can set flag value by using environment variable. For example, flag `--username` corresponds to `$USERNAME` env variable.
 
